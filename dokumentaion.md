@@ -131,3 +131,184 @@ Subshells begegnen uns ziemlich oft - z.B. werden Kommandos, Funktionen, Skripte
 Auch beim Wechsel in einen anderen Benutzeraccount wird eine Subshell mit den Berechtigungen dieses Benutzers gestartet.
 
 Wir können uns einen Überblick über die momentan laufenden Shells bzw. Subshells mit dem Kommando `ps` verschaffen.
+
+#### Ausgabe aller Prozesse des Benutzers, die mit einem Terminal verbunden sind
+```bash
+ps -a
+```
+
+### Rechnen mir Variablen / Arithmetic Operations
+
+Wir können auch einfache Rechenoperationen in der BASH durchführen:
+```bash
+zahl1=3
+zahl2=4
+summe=$(( zahl1 + zahl2 ))
+summe=$((zahl1+zahl2))
+let summe = $zahl1 + $zahl2 
+```
+
+## Escaping / Maskieren von Sonderzeichen
+Bestimmte Zeichen haben eine Sonderbedeutung für die BASH. Das wohl wichtigste Sonderzeichen ist das *Leerzeichen*: 
+
+> Das Leerzeichen ist ein Sonderzeichen. Das Leerzeichen ist das **Trennzeichen**.
+
+Weitere Sonderzeichen sind:
+```bash
+*       # Asterisk
+?       
+#       # Kommentarzeichen
+$       # Subsitution
+!       # History Expansion
+\       # Backslash
+'
+''
+```
+Sonderzeichen können durch das sogenannte *Escaping* oder *Maskieren* ihrer Sonderbedeutung entledigt werden, so dass sie von der Shell wie reguläre Satzzeichen behandelt werden.
+
+Zum Maskieren gibt es drei verschiedene Wege:
+
+1. Maskieren mit dem Backslash `\`: Der Backslash maskiert (nur) das **direkt darauffolgende** Zeichen
+
+2. Maskieren mit einfachen Hochkommata `'`: Einfache Hochkommata maskieren **jedes** in ihnen eingeschlossene Zeichen.
+
+3. Maskieren mit doppelten Hochkommata `"`: Doppelte Hochkommata maskieren **fast** alle in ihnen eingeschlossene Zeichen, nicht aber das Dollarzeichen `$`, Backticks `\`` für die Kommandosubstitution und der Backslash `/` vor bestimmten Zeichen.
+
+## Dateioperationen
+
+### Verzeichnisse erstellen
+
+Mit dem Kommando `mkdir` (*make directory*) können wir Verzeichnisse erstellen.
+```bash
+mkdir <name-des-verzeichnisses>
+mkdir <pfad-zum-verzeichniss>
+```
+### Dateien erstellen
+
+Dateien können auf vielfältige Art und Weise erstellt werden. Ein einfacher Weg, leere Dateien zu erstellen, ist mit dem Kommando `touch`.
+```bash
+touch <name-der-datei>
+touch <name-der-datei-1> <name-der-datei-2> ...
+touch <pfad-zur-datei>
+```
+Dateien können aber auch z.B. mit einem Editor wie `nano` erstellt werden.
+```bash
+nano <name-der>
+```
+### Editor nano
+
+`nano` ist ein einfacher Editor, der auf den meisten Linux Distributionen vorinstalliert ist. Als Hilfe zur Bedienung wird unten ein Menü mit Tastenkürzeln angezeigt. Hier bedeutet das Zeichen `^` die Taste `STRG`.
+
+Einige wichtige Tastenkombinationen:
+
+- `STRG+O` Datei speichern unter...  (Name kann/muss angegeben werden)
+- `STRG+S` Datei speichern (unter dem gleichen Namen)
+- `STRG+X` Editor verlassen (bei ungespeicherten Änderungen werden wir gefragt, ob wir diese speichern möchten)
+
+### Dateien und Verzeichnisse kopieren
+
+Dateien und Verzeichnisse können mit dem Kommando `cp` (*copy*) kopiert werden.
+```bash
+cp <quelle> <ziel>
+cp <pfad-zur-quelle> <pfad-zum-ziel>
+```
+**Vorsicht:** Wenn wir eine bestehende Datei als Ziel angeben, wird die Zieldatei **ohne Nachfrage** ersetzt und nicht etwas der Inhalt der Quelldatei an die Zieldatei angefügt.
+
+Beim Kopieren von Verzeichnissen müssen wir an die Option `-r` (*rekursiv*) denken. 
+```bash
+cp -r <quellverzeichnis> <zielverzeichnis>
+```
+Der Grund ist, dass ein Verzeichnis nicht leer ist, die Kopieraktion also wiederholt/rekursiv ausgeführt werden muss.
+
+### Dateien und Verzeichnisse löschen
+
+Dateien und Verzeichnisse können mit dem Kommando `rm` (*remove*) gelöscht werden.
+
+Analog zum Kopieren von Verzeichnissen müssen wir auch beim Löschen von Verzeichnissen die Option `-r` angeben.
+
+> [!NOTE] 
+> Dies gilt übrigens für sehr viele Kommandos: funktioniert die Anwendung eines Kommandos auf eine Datei, nicht aber auf ein Verzeichnis, so feht oft einfach nur die Option `-r`.
+
+```bash
+rm <pfad-zur-datei>
+rm -r <pfad-zum-verzeichniss>
+```
+>[!NOTE]
+> Wenn wir eine Datei löschen, so löschen wir nicht die Datei an sich. Wir entfernen lediglich den Dateinamen bzw. Pointer auf die Daten der Datei auf dem Speichermedium. Dieser Bereich im Speicher wird dann als wieder überschreibbar gemeldet.
+>
+> Die Daten könnten also solange keine weitere Schreiboperation auf diesen Speicherbereich erfolgt ist wiederhergestellt werden.
+
+### Dateien und Verzeichnisse verschieben / umbenennen
+
+Dateien und Verzeichnisse können mit dem Kommando `mv` (*move*) verschoben und umbenannt werden.
+
+Beim Verschieben von Verzeichnissen dürfen wir die Option `-r` *nicht* angeben. Der Grund dafür ist, dass beim Verschieben nicht wie vielleicht angenommen eine Art *ausschneiden* und *einfügen* stattfindet, sondern wie beim Löschen lediglich der Dateiname ersetzt wird. 
+
+Es muss also keine rekursive Operation auf dem Speichermedium stattfinden. Das ist auf unten stehendender Illustration vielleicht besser zu erkennen.
+```bash
+mv <quelle> <ziel>
+mv <quellverzeichnis> <zielverzeichnis>
+mv <alter-name> <neuer-name>
+```
+### Illustration kopieren, löschen, verschieben
+
+![illustration-cp-rm-mv](./images/cp-mv-rm.png)
+
+### relative und absolute Pfadangaben
+
+Immer wenn wir eine Dateioperation durchführen, müssen wir den Pfad (eine Art *Wegbeschreibung*) zu der jeweiligen Datei angeben. Diese Angabe können wir auf zwei unterschiedliche Arten und Weisen machen: *relativ* oder *absolut*.
+
+#### relative Pfadangaben
+
+Eine *relative Pfadangabe* beschreibt den Weg ausgehend vom **aktuellen Standort** (aktuelles Verzeichnis) im Dateisystem.
+```bash
+cp somefile Somedir/
+```
+##### spezielle Verzeichniseinträge (Special Directory Entries) . und ..
+
+- Sie gehören zur Kategorie der relativen Pfadangaben (Relative Pathnames)
+- Sie werden auch als *Pseudodirektoren* (Pseudo-Directories) bezeichnet
+- Manchmal nennt man sie auch *Implizite Links* oder *Selbstreferenzierende Einträge*
+- Formal sind sie aber einfach reguläre Einträge im Dateisystem, die bei jedem Verzeichnis automatisch vorhanden sind.
+
+- `.` (Punkt) symbolisiert das aktuelle Verzeichnis
+- `..` (doppelter Punkt) symbolisiert das übergeordnete Verzeichnis (Parent Directory)
+
+#### absolute Pfadangaben
+
+Eine *absolute Pfadangabe* beschreibt den Weg ausgehend von der Wurzel `/` (bzw. `\` in Windows) des Dateisystembaums.
+```bash
+cp /home/tux/somefile /home/tux/Somedir
+```
+Absolute Pfadangaben können wir immer daran erkennen, dass das erste Zeichen des Pfades ein Slash `/` ist.
+
+Einzige Ausnahme ist die Tilde `~`, welche den absoluten Pfad zum Heimatverzeichnis des aufrufenden Benutzers symbolisiert. Folgende Pfadangaben sind identisch:
+```bash
+cd ~/Somedir
+cd /home/tux/Somedir
+```
+### Alles ist eine Datei
+
+"Alles ist eine Datei" ist ein zentrales Konzept in Unix/Linux, das bedeutet, dass nahezu alle Ressourcen im System – einschließlich regulärer Dateien, Verzeichnisse, Geräte, Prozesse und Sockets – über das Dateisystem als Datei abstrahiert werden. Dadurch können viele Systemkomponenten über einheitliche Schnittstellen (z. B. Dateioperationen wie `open`, `read`, `write`) angesprochen werden.
+
+### Pattern Matching
+
+Ein *Pattern* ist ein *Muster*, bzw. ein *Platzhalter* welches auf eine Zeichenfolge passt, so dass wir damit z.B. nach Dateien bzw. Pfadangaben suchen können (mit entsprechenden Kommandos).
+
+Wir können in einem *Pattern* bestimmte Sonderzeichen verwenden, um dieses allgemeingültiger zu machen:
+
+*Globbing Characters:*
+
+- `*` (*Asterisk*) -> Steht für beliebige Zeichen, welche beliebig oft vorkommen können (auch keinmal)
+- `?` -> Steht für jedes beliebige Zeichen welches, **exakt** einmal vorkommt
+
+Weitere Möglichkeiten für Pattern Matching:
+
+- `!(pattern)` Exkludiert das angegebene Pattern (in dem Pattern dürfen auch wieder die oben angegebenen *Globbing Characters* vorkommen
+
+Beispiele:
+```bash
+rm *.jpg       # löscht alle Dateien mit der Endung .jpg
+ls datei?.txt  # zeigt nur Dateien an, bei denen nach der Zeichenfolge datei noch ein weiteres beliebiges Zeichen folgt und die die Endung .txt haben
+mv !(o*) ../somdir/    # verschiebt alle Dateien des aktullen Verzeichnisses nach ../somedir, ausser Dateien, die mit einem o beginnen
+```
