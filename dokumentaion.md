@@ -88,6 +88,11 @@ Dieses Konzept gilt nicht nur für Aliase, sondern generell für die Konfigurati
 
 Aliase werden z.B. direkt in der Datei `~/.bashrc` oder besser noch in der Datei `~/.bash_aliase` definiert (wenn wir als Shell die BASH verwenden).
 
+> [!NOTE]
+> Damit die neu eingerichteten Aliase gueltig werden, muss die entsprechende Datei neu eingelesen werden. Im Falle der `~/.bashrc` bzw. `~/.bash_aliases` kann dies folgende Art und Weise erfolgen:
+> - neue BASH oeffnen
+> - Kommando `source ~/.bashrc` bzw. `. ~/.bashrc`
+
 ## Variablen
 
 ### Umgebungsvariablen / Environment Variables
@@ -312,3 +317,4 @@ rm *.jpg       # löscht alle Dateien mit der Endung .jpg
 ls datei?.txt  # zeigt nur Dateien an, bei denen nach der Zeichenfolge datei noch ein weiteres beliebiges Zeichen folgt und die die Endung .txt haben
 mv !(o*) ../somdir/    # verschiebt alle Dateien des aktullen Verzeichnisses nach ../somedir, ausser Dateien, die mit einem o beginnen
 ```
+
