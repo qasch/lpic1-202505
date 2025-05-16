@@ -512,3 +512,220 @@ Anzahl der verschiedenen Shells in /etc/passwd zählen
 ```bash
 cut -d: -f7 /etc/passwd | sort | uniq | wc -l 
 ```
+
+== Prozesse
+
+Ein Prozess ist ein sich in der Auführung befindliches Programm. Ein Programm resultiert immer in mindestens einem Prozess. Prozesse laufen jeweils in einem von anderen unabhängigen "Resourcenraum", haben eine eigene _PID_, kennen nur die _PID_ des Prozesses, von dem sie gestartet wurden (Elternprozess). Prozesse können mit dem Kommando `kill` über _Signale_ beeinflusst werden.
+
+Wird der Elternprozess beendet, so werden (in der Regel) gleichzeitig alle Kindprozesse mit beendet.
+
+Auf der Shell kann immer nur ein einzelner Prozess im _Vordergrund_ ausgeführt werden. Prozesse können mit der Tastenkomnination `STRG+Z` angehalten und in den Hintergrund geschickt werden. Mit dem Kommando `bg` kann dieser Prozess dann im Hintergund fortgesetzt werden, `fg` holt den Prozess in den Vordergrund zurück. 
+
+Wir können einen Prozess beim Start aber auch direkt in den Hintergrund schicken und starten (duch Anhängen eines `&`):
+```
+ kommando &
+```
+ - `ps -aux`: Anzeige aller laufende Prozessez
+ - `ps -ef`: auch Anzeige aller laufenden Prozesse
+ - `ps --forest`: Prozesshirarchie (Baumstruktur) anzeigen
+ - `jobs`: Anzeigen der Hintergrundprozesse
+ - `fg`: letzten/aktuellen/default Job in den Vordergrund holen
+ - `fg %<jobnummer>`: Job mit Jobnummer `<jobnummer>` in den Vordergrund holen
+ - `bg`: Hintergrundprozess fortsetzen
+ - `bg %<jobnummer>`: Hintergrundprozess mit Jobnummer `<jobnummer>` in fortsetzen
+
+ == kill
+
+ `kill` sendet Signale an Prozesse. Es muss die PID des Prozesses angegeben werden, Prozessname funktioniert nicht.
+
+ - `kill -s <signal> <PID>`: sendet <signal> an den Prozess mit der PID <PID>
+ - `kill -<signal> <PID>`: sendet <signal> an Prozess mit der PID <PID>
+
+ Die PID eines Prozesses kann auf mehrere Arten ermittelt werden:
+```
+  ps -ef | grep <prozessname>
+   pgrep <prozessname>
+    ...
+```
+=== einige wichtige Signale
+
+    - `SIGTERM` (15): Standard, falls kein bestimmtes Signal angegeben wird. Sendet eine "freundliche" Aufforderung an den Prozess, sich doch bitte zu beenden. Im Prozess selbst ist festgelegt, wie er sich beendet, z.B. werden noch gewisse Aufräumarbeiten durchgeführt etc.
+    - `SIGINT` (2): sendet eine etwas deutlichere Aufforderung an den Prozess, sich zu beenden, wird bei der Tastenkomnination `STRG+C` (_Cancel_) gesendet
+    - `SIGKILL` (9): rabiateste Methode, Signal wird nicht an den Prozess, sondern direkt an den Scheduler gesendet, der daraufhin den entsprechenden Prozess aus seiner Liste löscht, der Prozess somit keine CPU Zeit mehr zur Verfügung gestellt bekommt und somit zwangsläufig beendet wird.
+    - `SIGSTOP` (19): hält Prozess an und schickt ihn in den Hintergrund (`STRG+Z`)
+    - `SIGCONT` (18): startet angehaltene Prozesse
+
+=== pkill und killall
+
+    - `pkill`: analog zu oben, `pkill` erwartet aber den Namen bzw. einen Teil des Namens eines Prozesses anstatt der PID. Falls mehere Prozesse auf den Namen passen, wird das Signal an *alle* diese Prozesse gesendet.
+    - `killall` auf neueren Distributionen nicht mehr vorhanden, ähnliches Verhalten wie `pkill`
+
+## Berechtigungen
+
+Berechtigungen in Linux steuern den Zugriff auf Dateien und Verzeichnisse für *Benutzer* und *Gruppen*. Sie legen fest, wer lesen (`r`), schreiben (`w`) und ausführen (`x`) darf.
+
+Der folgende Auszug von `ls -l file1.txt` sagt folgendes aus:
+```bash
+  u  g  o
+  -rw-r--r-- 1 tux tux 5 Feb 12 13:09 file1.txt
+  ```
+  - Der User/Besitzer (`u`) darf den Inhalt der Datei lesen und ändern (`rw`)
+  - Mitglieder der Gruppe (`g`) dürfen den Inhalt der Datei nur lesen (`r`)
+  - Alle anderen Benutzer, die weder der Besitzer, noch Mitglieder der Gruppe sind, dürfen den Inhalt der Datei lesen (`r`)
+
+  ### Bedeutung der Berechtigungen für Dateien
+
+  `r` (*read*) -> Dateiinhalt lesen
+  `w` (*write*) -> Dateiinhalt ändern -> aber **nicht** Datei löschen
+  `x` (*eXecute*) -> Datei ausführen
+
+  ### Bedeutung der Berechtigungen für Verzeichnisse
+
+  `r` (*read*) -> Verzeichnisinhalt lesen bzw. das Auflisten der Namen der Dateien
+  `w` (*write*) -> Verzeichnisinhalt ändern -> Dateien hinzufügen und löschen
+  `x` (*eXecute*) -> Verzeichnis betreten 
+
+  >[!IMPORTANT] 
+  > Es macht **keinen wirkliche Sinn** wenn das Execute Bit bei Verzeichnissen **nicht** gesetzt ist. Dann wird alles etwas seltsam... Wir brauchen dieses Bit, damit Verzeichnisse wie gewünscht funktionieren.
+
+  ### Symbolische Rechtevergabe
+  Hierbei werden *Symbole* für die Berechtigungen verwendet. Diese Art der Rechtevergabe ist sehr intuitiv und eignet sich besonders dafür, einzelne Berechtigungen hinzuzufügen oder zu entfernen, ohne die bestehenden Berechtigungen zu verändern. Es ist auch einfach, diese Vorgänge wieder rückgängig zu machen.
+
+  #### Symbole
+
+  `r` -> read
+  `w` -> write
+  `x` -> eXecute
+
+  `u` -> user/owner
+  `g` -> group
+  `o` -> others (weder owner noch group)
+  `a` -> all
+
+  `+` -> hinzufügen
+  `-` -> entziehen
+  `=` -> setzten
+
+  Der Gruppe Schreibrechte hinzufügen:
+  ```bash
+  chmod g+w file1.txt
+  ```
+  Dem Besitzer Leserechte entfernen:
+  ```bash
+  chmod o-r file1.txt
+  ```
+  Besitzer und Gruppe Schreib- und Leserechte
+  ```bash
+  chmod ug+rw file1.txt
+  ```
+  Dem Besitzer Ausführungsrechte hinzufügen, der Gruppe Schreibrechte entziehen, allen anderen Leserechte hinzufügen.
+  ```bash
+  chmod u+x,g-w,o+r file1.txt
+  ```
+  ### Numerische/Oktale Rechtevergabe
+  Die numerische oder oktale Rechtevergabe verwendet Zahlen des Oktalsystems, um Berechtigungen gleichzeitig für Besitzer, Gruppe und Others zu vergeben. 
+
+  Es eignet sich besonders für Situationen, in denen wir eine Datei oder Verzeichnis in einen expliziten Zustand versetzten wollen.
+
+  Interessant ist die Herkunft der Zahlen für die Berechtigungen. Übersetzen wir sie doch einmal ins Binärsystem:
+
+  | Symbol | Okal | Binär |
+  | ------ | ---- | ----- |
+  | `r` | `4` | `100` |
+  | `w` | `2` | `010` |
+  | `x` | `1` | `001` |
+  | `-` | `0` | `000` |
+
+  Wir sehen, dass das gesetzte Bit *wandert* bzw. sich immer um eine Position verschiebt. Sehen wir uns das einmal im Listing von `ls -l` an:
+  ```bash
+    7  6  4
+     111110100
+     -rwxr--r-- 1 tux tux 5 Feb 12 13:09 file1.txt
+
+     111 -> 7
+     110 -> 6
+     100 -> 4
+     ```
+     Ist also ein bestimmtes Recht gesetzt, bedeutet dass, das hier binär auch eine `1` steht. Wir sehen sozusagen ein Abbild dessen, was wirklich im Speicher passiert. Toll, oder?
+
+     ### Sonderbits
+     Zusätzlich gibt es noch drei Sonderbits, die gewisse Dinge ermöglichen, damit unser System funktioniert:
+
+     #### SUID Bit
+
+     Auf eine **ausführbare Binärdatei** gesetzt, bewirkt das SUID Bit, dass die Datei mit den Berechtigungen des **Besitzers** der Datei ausgeführt wird und **nicht** mit den Berechtigungen des aufrufenden Users.
+
+     ##### Beispiel `/etc/passwd`
+     ```bash
+     ls -l /usr/bin/passwd
+
+     -rwsr-xr-x 1 root root 68248 Feb 24  2025 /usr/bin/passwd
+
+     ls -l /etc/shadow
+
+     -rw-r----- 1 root shadow 1619 Feb 24 2025 /etc/shadow
+     ```
+     Das Kommando kann also von einem regulären Benutzer ausgeführt werden, läuft dann aber mit Root-Rechten und kann ja auch nur so den Inhalt der Datei `/etc/shadow` ändern.
+
+     #### SGID Bit
+
+     Auf eine **ausführbare Binärdatei** gesetzt, bewirkt das SGID Bit, dass die Datei mit den Berechtigungen der **Gruppe** der Datei ausgeführt wird und **nicht** mit den Berechtigungen des aufrufenden Users.
+
+     Auf ein Verzeichnis gesetzt, bewirkt es, dass neu darin erstellte Dateien der Gruppe zugewiesen werden, der das Verzeichnis gehört und nicht der Gruppe des erstellenden Users.
+
+     ```bash
+     ls -ld /var/mail
+
+     drwxrwsr-x 2 root mail 4096 Feb 20 09:26 /var/mail/
+     ```
+     So werden alle E-Mails der Gruppe `mail` zugeordnet und können vom Mailserver hinzugefügt und auch gelöscht werden.
+
+     #### Sticky Bit
+
+     Auf ein Verzeichnis gesetzt, bewirkt es, dass darin enthaltene Dateien nur noch vom Besitzer der Datei genändert oder gelöscht werden dürfen.
+     ```bash
+     ls -ld tmp
+
+     drwxrwxrwt 8 root root 4096 Feb 20 09:30 /tmp
+     ```
+     So ist es einem regulären Benutzer nicht möglich, Dateien eines anderen Benutzers zu ändern oder zu löschen.
+
+ ## Links
+
+ ### Symbolische Links / Symlinks
+ Sind im Prinzip das Gleiche wie Verknüpfungen unter Windows. Ein Symlink verweist auf eine andere Datei oder gesamtes Verzeichnis, genauer gesagt *auf den Pfad* zu einer Datei oder Verzeichnis. Es ist eine zusätzliche Inode, die auf ein Ziel verweist. Symlinks können auch über Partitionsgrenzen hinaus bestehen. Wird das Original gelöscht, bleibt ein sog. *toter* oder *verwaister* Link zurück, der nicht mehr funktioniert.
+ ```bash
+ ln -s original.txt symlink.txt
+ ln -s originalverzeichnis symlinkverzeichnis
+ ```
+ Symlinks werden z.B. von Webservern genutzt: 
+ - `/etc/apache2/sites-available` -> alle vorhandenen Konfigurationsdateien für Websites (Original)
+ - `/etc/apache2/sites-enabled` -> nur die *aktiven* Konfigurationsdateien für Websites (Symlink)
+
+ ### Hardlinks
+ Hardlinks sind eigentlich lediglich Dateinamen. Mehrere Dateinamen bzw. Hardlinks können auf den gleichen Bereich im Speicher bzw. die gleiche Datei zeigen. Ein Hardlink ist nicht mehr vom Original zu unterscheiden, er hat die selbe Inode wie das Original. Wird das "Original" gelöscht, ist die Datei weiterhin über den "Link" bzw. jetzt neuen Dateinamen zu erreichen.
+
+ Hardlinks funktionieren daher natürlich **nicht** auf Verzeichnisse oder über Partitionsgrenzen hinaus.
+ ```bash
+ ln original.txt hardlink.txt
+ ```
+ Man kann die Anzahl der Hardlinks mit `ls -l` sehen (Spalte direkt nach den Berechtigungen) bzw. in der Ausgabe des Kommandos `stat`:
+ ```bash
+ ln file1.txt hardlink-file1
+ ls -l file1.txt
+
+ -rw-r--r-- 2 tux tux 5 Feb 12 13:09 file1.txt
+
+ stat file1.txt
+
+   File: file1.txt
+     Size: 5         	Blocks: 8          IO Block: 4096   regular file
+     Device: 254,1	Inode: 1177496     Links: 2
+     Access: (0644/-rw-r--r--)  Uid: ( 1000/     tux)   Gid: ( 1000/     tux)
+     Access: 2025-02-17 08:55:39.987803189 +0100
+     Modify: 2025-02-12 13:09:04.146349786 +0100
+     Change: 2025-02-24 17:31:49.220713220 +0100
+      Birth: 2025-02-12 11:45:38.078409807 +0100
+      ```
+      Hardlinks werden im System verwendet, um Speicherplatz zu sparen z.B. für bestimmte Systemkommandos. Auch nutzen manche Backup Lösungen Hardlinks um inkrementelle Backups zu erstellen.
+
