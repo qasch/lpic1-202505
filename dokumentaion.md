@@ -729,3 +729,525 @@ Der folgende Auszug von `ls -l file1.txt` sagt folgendes aus:
       ```
       Hardlinks werden im System verwendet, um Speicherplatz zu sparen z.B. für bestimmte Systemkommandos. Auch nutzen manche Backup Lösungen Hardlinks um inkrementelle Backups zu erstellen.
 
+## Archivierung und Komprimierung
+
+### Archivierung mit `tar`
+
+*Archivierung* bezeichnet das Zusammenfassen **mehrerer** Dateien und Verzeichnisse in eine **einzige** Datei, ohne zwingende Kompression. Dadurch bleibt die ursprüngliche Struktur der Dateien erhalten, so können mehrere Dateien einfacher gespeichert oder übertragen werden.
+
+Unter Linux wird das Kommando `tar` (*Tape Archiver*) zur Archivierung verwendet. `tar` ist ein sehr altes Programm und die Syntax (freundlich ausgedrückt) etwas gewöhnungsbedürftig. Kurzoptionen haben oft keine direkte Entsprechung zu den Langoptionen.
+
+Ein `tar`-Archiv kann man sich mit dem Kommando `cat` anzeigen lassen:
+
+![Ausgabe tar Archiv mit cat](./images/ausgabe-tar-archiv-mit-cat.png)
+
+> [!NOTE]
+> Alle numerischen Angaben hier sind im *Oktalformat*. Dies hat historische Gründe. Möchte man den Zeitstempel umrechnen, kann man sich von der BASH helfen lassen:
+> ```bash
+> echo $(( 8#14757403716 ))
+> ```
+
+Einige wichtige Optioenen zu `tar`:
+#### Archiv aus Dateien erstellen
+```bash
+tar -cf archive.tar file1.txt file2.txt file3.txt 
+tar --create --file archive.tar file1.txt file2.txt file3.txt 
+```
+#### Dateien aus Archiv extrahieren
+```bash
+tar -xf archive.tar
+tar --extract --file archive.tar
+```
+#### Die Option -v / --verbose gibt eine Rückmeldung darüber, was tar macht
+```bash
+tar -xvf archive.tar
+tar --extract --verbose --file archive.tar
+```
+#### Einzelne Datei aus Archiv extrahieren
+```bash
+tar -xf archive.tar file_to_extract.txt
+```
+#### Inhalt eines Archivs anzeigen/auflisten
+```bash
+tar -tf archiv.tar
+tar --list --file archive.tar
+```
+#### Datei einem bestehenden Archiv hinzufügen
+```bash
+tar -rf archive.tar other_file.txt
+tar --append --file archive.tar other_file.txt
+```
+#### Archiv aus einem Verzeichnis erstellen
+```bash
+tar -cf archive.tar /absolute/path/to/dir
+tar -cf archive.tar relativ/path/to/dir
+```
+#### Differentielles Archiv erstellen
+
+#### Bestimmte Dateien *nicht* hinzufügen
+
+#### Archiv an einem bestimmten Ort extrahieren
+
+#### Teile des Pfades beim entpacken weglassen
+```bash
+--strip-components=NUMBER
+```
+> [!NOTE] 
+> Pfadangaben werden immer mit archiviert! Wir müssen uns also im Vorhinein Gedanken machen, ob wir z.B. einen relativen oder absoluten Pfad angeben.
+
+> [!IMPORTANT]
+> Die Option `-f` erfordert **zwingend** ein direkt darauffolgendes Argument - den Namen des Archivs. Insofern ist die Reihenfolge der Optionen hier **nicht** egal.
+
+#### Unix Epoch Time
+
+Die *Unix Epoch Time* (auch *POSIX-Zeit* oder *Unix-Zeitstempel*) ist die Anzahl der Sekunden, die seit dem 1. Januar 1970, 00:00:00 UTC vergangen sind. Sie wird oft in Betriebssystemen und Programmiersprachen verwendet, um Zeitangaben als einfache Ganzzahlen zu speichern und zu verarbeiten.
+
+So ist es möglich, Daten in unterschiedlichen Formaten (z.B. Zeitzonen) anzugeben oder Differenzen zwischen zwei Zeitpunkten zu berechnen.
+
+### Komprimierung
+
+Durch die Komprimierung können wir **eine einzelne** Datei mit Hilfe bestimmter Algorithmen verlustfrei in ihrer Grösse verkleinern.
+
+*Analogie Komprimierung:* getrocknete Handtücher, die im Wasser wieder gross werden
+
+*Analogie Archivierung:* einzelne Blumen werden zu einem Strauss gebunden
+
+Um **mehrere** Dateien oder ganze Verzeichnisse zu komprimieren, müssen wir zusätzlich im Vorfeld die *Archivierung* anwenden. Bestimmte Programme in Windows-Systemen vereinen diese beiden Konzepte unter einer Haube. Wir müssen uns jedoch merken, dass dies grundsätzlich zwei komplett verschiedene Konzepte sind.
+
+Auch unter Linux ist es möglich beide Schritte auf einmal mit dem Kommando `tar` durchzuführen, dabei ruft `tar` im Hintergrund jedoch die jeweiligen Kommandos zur Komprimierung auf.
+
+Unter Linux nutzen wir standardmässig drei verschiedene Tools zur Komprimierung: `gzip`, `bzip2` und `xz`.
+
+Die Optionen der drei Kommandos sind mehr oder weniger identisch.
+#### Datei komprimieren:
+```bash
+gzip somefile
+bzip2 somefile
+xz somefile
+```
+#### Datei dekomprimieren:
+```bash
+gzip -d somefile.gz
+bzip2 -d somefile.bz2
+xz -d somefile.xz
+
+gunzip somefile.gz
+bunzip2  somefile.bz2
+unxz -d somefile.xz
+```
+>[!NOTE]
+> Sowohl bei der Komprimierung als auch bei der Dekomprimierung wird die jeweilige Originaldatei nicht behalten, sondern ersetzt.
+> Dies können wir mit der Option `-k` (`--keep`) umgehen.
+
+>[!NOTE]
+> Es gibt für alle drei Algorithmen auch die Option `-l` bzw.  `--list`. Hiermit können wir uns einen Überblick/Vergleich der komprimierten und unkomprimierten Datei und die Kompressionsrate anzeigen lassen.
+> 
+> Interessanterweise ist dies nur ein *Listing*, es findet zwar eine Dekomprimierung der Datei statt, allerdings nur im RAM, selbst wenn wir zusätzlich die Option `-d` zur Dekomprimierung angeben.
+
+### Vergleich der drei Komprimierungsalgorithmen
+
+Vergleich der Geschwindigkeiten und resultierenden Grössen beim Komprimieren:
+
+![vergleich-komprimierung](./images/vergleich-komprimierung.png)
+Vergleich der Geschwindigkeiten beim Dekomprimieren:
+
+![vergleich-dekomprimierung](./images/vergleich-dekomprimierung.png)
+Zusammenfassend lassen sich folgende Aussagen über die drei Komprimierungsalgorithmen treffen:
+
+- `gzip` ist am schnellsten bei der Komprimierung, die komprimierte Datei ist aber nicht besonders klein
+- `bzip2` braucht lange für die Komprimierung und die Dekomprimierung, erzeugt aber eine ziemlich kleine Datei
+- `xz` braucht ziemlich lange bei der Komprimierung, erzeugt liegt bei der Kompressionsrate zwischen den beiden anderen, ist aber sehr schnell bei der Dekomprimierung
+
+Es gibt also für alle drei bestimmte Anwendungsfälle, in denen sie ihre Stärken ausspielen können.
+
+### Erstellen und Entpacken eines komprimierten Archivs direkt mit `tar`
+
+#### gzip komprimiertes Archiv erstellen
+```bash
+tar -czf archiv.tar.gz somdir/
+tar -czvf archiv.tar.gz somdir/     # verboser Output
+```
+#### bzip2 komprimiertes Archiv erstellen
+```bash
+tar -cjf archiv.tar.bz2 somdir/
+tar -czjf archiv.tar.bz2 somdir/     # verboser Output
+```
+#### xz komprimiertes Archiv erstellen
+```bash
+tar -cJf archiv.tar.xz somdir/
+tar -cJvf archiv.tar.xz somdir/     # verboser Output
+```
+#### Komprimiertes Archiv entpacken
+##### mit gzip komprimiertes Archiv entpacken
+```bash
+tar -xzf archiv.tar.gz
+tar -xzvf archiv.tar.gz
+```
+##### mit bzip2 komprimiertes Archiv entpacken
+```bash
+tar -xjf archiv.tar.bz2
+tar -xzjf archiv.tar.bz2
+```
+##### mit xz komprimiertes Archiv entpacken
+```bash
+tar -xJf archiv.tar.xz
+tar -xJvf archiv.tar.xz
+```
+##### automatisch jeweiligen Algorithmus anhand der Dateiendung anwenden lassen (Dateiendung muss stimmen!)
+```bash
+tar -xf archiv.tar.gz
+tar -xf archiv.tar.bz2
+tar -xf archiv.tar.xz
+```
+
+== Paketmanagement Debian
+
+Unter Debian basierten Distributionen wird der Paketmanager `apt` bzw. `apt-get` verwendet. Im Hintergund nutzen beide aber das Low-Level-Tool `dpkg`. Dieses hat unter anderem folgende Einschränkungen:
+
+- kein Zugriff aufs Internet, Pakete müssen manuell heruntergeladen werden
+- Abhängigkeiten können also nicht automatisch aufgelöst werden
+- `dpkg` gibt aber Hinweise auf fehlende Abhängigkeiten
+
+=== Debian Paketmanagement
+
+- `dpkg -i <datei>.deb`: Paket `<datei>` installieren (oder Update falls Paket schon installiert)
+- `dpkg -I <datei>.deb`: Informationen über Paket `<datei>.deb`
+- `dpkg --info <datei>.deb`: Informationen über Paket `<datei>.deb`
+- `dpkg -r <paket>`: Paket `<paket>` entfernen/deinstallieren (Konfigurationsdateien bleiben erhalten)
+- `dpkg -P <paket>`: Paket `<paket>` entfernen/deinstallieren (_purge_) (Konfigurationsdateien werden mit entfernt)
+- `dpkg -l`: Liste aller auf dem System installierten Pakete inkl. Status (installiert, entfernt, teilweise installiert/entfernt ...)
+- `dpkg --list`: Liste aller auf dem System installierten Pakete inkl. Status (installiert, entfernt, teilweise installiert/entfernt ...)
+`dpkg -l <glob-pattern>`: Liste aller Pakete, die auf `<glob-pattern>` passen 
+- `dpkg --get-selections`: übersichtliche Liste aller installierten Pakete
+- `dpkg -L <paket>`: Liste aller im Paket `<paket>` enthaltener Dateien
+- `dpkg --list-files <paket>`: Liste aller im Paket `<paket>` enthaltener Dateien
+- `dpkg -s`: Statusinformationen aller auf dem System installierten Pakete
+- `dpkg -s <paket>`: Statusinformationen von `<paket>`
+- `dpkg -S /path/to/file`: Angabe, zu welchem Paket `/path/to/file/` gehört
+
+=== Troubleshooting
+
+Bei fehlerhaften oder nur teilweise installierten Paketen können wir folgende Option von `apt` nutzen:
+
+ apt install -f
+  apt install --fix-broken
+
+  === Paketquellen
+
+  `Archive type`:: A repository may contain packages with ready-to-run software (binary packages, type deb) or with the source code to this software (source packages, type deb-src). The example above provides binary packages.
+
+  `URL`:: The URL for the repository.
+
+  `Distribution`:: The name (or codename) for the distribution for which packages are provided. One repository may host packages for multiple distributions. In the example above, disco is the codename for Ubuntu 19.04 Disco Dingo.
+
+  `Components`:: Each component represents a set of packages. These components may be different on different Linux distributions. For example, on Ubuntu and derivatives, they are:
+
+  `main`:: contains officially supported, open-source packages.
+
+  `restricted`:: contains officially supported, closed-source software, like device drivers for graphic cards, for example.
+
+  `universe`:: contains community maintained open-source software.
+
+  `multiverse`:: contains unsupported, closed-source or patent-encumbered software.
+
+  On Debian, the main components are:
+
+  `main`:: consists of packages compliant with the Debian Free Software Guidelines (DFSG), which do not rely on software outside this area to operate. Packages included here are considered to be part of the Debian distribution.
+
+  `contrib`:: contains DFSG-compliant packages, but which depend on other packages that are not in main.
+
+  `non-free`:: contains packages that are not compliant with the DFSG.
+
+  `security`:: contains security updates.
+
+  `backports`:: contains more recent versions of packages that are in main. The development cycle of the stable versions of Debian is quite long (around two years), and this ensures that users can get the most up-to-date packages without having to modify the main core repository.
+
+  === apt-get
+
+  - `apt-get update`: Paketindex auf den neuesten Stand bringen
+  - `apt-get upgrade`: alle Pakete aktualisieren. Es werden aber keine neuen Pakete installiert oder vorhandene entfernt.
+  - `apt-get dist-upgrade`: wie `upgrade`, es werden aber ggf. neue Pakete installiert oder vorhandene entfernt.
+  - `apt-get remove`: Paket entfernen, Konfigurationsdateien bleiben erhalten
+  - `apt-get remove --purge`: Paket entfernen, Konfigurationsdateien werden mit entfernt
+  - `apt-get purge`: Paket entfernen, Konfigurationsdateien werden mit entfernt
+  - `apt-get autoremove`: alle Pakete entfernen, die automatisch installiert wurden (als Abhängigkeit) und von keinem weiteren Paket benötigt werden.
+  - `apt-get clean`: `.deb` Pakete löschen
+  - `apt-cache search`: nach Paketen suchen, akzeptiert RegEx, durchsucht Paketnamen und Beschreibung
+  - `apt-cache show`: Informationen über ein Paket
+  - `apt-file`: Muss zusätzlich installiert werden 
+  - `apt-file search `: Kann herausfinden, welches Paket `<datei>` bereitstellt 
+  - `apt-file update `: Paketindex von `apt-file` aktualiseren
+
+  == Paketmanagement Red hat
+
+  === rpm
+
+  - kann Programme installieren, die lokal auf dem System vorliegen
+  - die Pakete müssen dafür in einem bestimmten Binärformat vorliegen (`.rpm`)
+  - Abhängigkeiten können nicht automatisch aufgelöst werden
+  - fehlende Abhängigkeiten werden allerdings aufgelistet (jedoch nur die Dateien
+    an sich, nicht die fehlenden _Pakete_)
+    - `-v` verboser Output
+    - `-h` Hashtags (`#`) als Fortschrittsanzeige
+
+    Installation eines Pakets:
+
+    ----
+    rpm -i PACKAGENAME
+    rpm -i gimp-2.8.22-1.el7.x86_64.rpm
+    ----
+
+    === Update
+
+    Ein Paket aktualisieren
+
+    ----
+    rpm -U PACKAGENAME
+    ----
+
+    - ist kein Paket mit diesem Namen vorhanden, wird es trotzdem die neues Version installiert.
+    - dies kann mit der Option `-F` verhindert werden
+
+    === Deinstallation
+
+    ----
+    rpm -e PACKAGE    # erase
+    rpm -e wget
+    ----
+
+    === Installierte Pakete anzeigen
+
+    Alle installierten Pakete anzeigen
+
+    ----
+    rpm -qa      # query all
+    ----
+
+    === Informationen über Pakete erhalten
+
+    Informationen über ein installiertes Paket:
+
+    ----
+    rpm -qi unzip       # query information
+    ----
+
+    Informationen darüber, welche `Dateien` in einem Paket enthalten sind:
+
+    ----
+    rpm -ql unzip      # query list
+    ----
+
+    Informationen über ein `noch nicht` installiertes Paket, hier kann eine FTP-Adresse oder URL angegeben werden:
+
+    ----
+    rpm -qip atom.x86_64.rpm           # query information not installed
+    ----
+
+    ----
+    rpm -qlp atom.x86_64.rpm     # query list not installed
+    ----
+
+
+    === Zu welchem Paket gehört eine Datei
+
+    ----
+    rpm -qf /usr/bin/unzip       # query file
+    > unzip-6.0-19.el7.x86_64
+    ----
+
+    == YellowDog Updater Modified (yum)
+
+    Unterschied zu Debian: Der Paketindex wird automatisch aktualisiert. 
+
+    === nach Paketen suchen
+
+    ----
+    yum search PATTERN
+
+    yum search 7zip
+    ----
+
+    === Installation, Upgrade, Removal
+
+    Ohne die Angabe eines Paketnamens wird das gesamte System aktualisiert. Es gibt *kein* `yum upgrade`!
+
+    ----
+    yum update
+    ----
+
+    ----
+    yum install p7zip
+    ----
+
+    ----
+    yum update wget
+    ----
+
+    ----
+    yum check-update PACKAGENAME
+    yum check-update                # gesamtes System
+    ----
+
+    === Pakete nur herunterladen
+
+    ----
+    yum install --downloadonly <package>
+    yum install --downloadonly --downloaddir=<directory> <package>
+    ----
+
+    === zu welchem Paket gehört eine Datei
+
+    ----
+    yum whatprovides DATEI
+    yum whatprovides libgimpui-2.0.so.0
+    ----
+
+    Funktioniert auch mit Dateien:
+
+    ----
+    yum whatprovides /etc/hosts
+    ----
+
+    === Informationen über ein Paket erhalten
+
+    ----
+    yum info firefox
+    ----
+
+    === Software Repositories
+
+    - Repos sind in `/etc/yum.repos.d` zu finden, z.B. `CentOS-Base.repo`
+    - Repos können hinzugefügt werden, indem eine `.repo` Datei dort abgelegt wird (oder am Ende von `/etc/yum.conf`)
+    - besser aber mit dem Tool `yum-config-manager`
+
+    Um den `yum-config-manager` nutzen zu können muss das Paket `yum-utils` installiert werden.
+
+    ----
+    yum-config-manager --add-repo https://rpms.remirepo.net/enterprise/remi.repo
+
+    yum-config-manager --enable-repo baseos-source
+    ----
+
+    Liste der verfügbaren Repositories:
+
+    ----
+    yum repolist all
+    ----
+
+    Repos disablen und enablen:
+
+    ----
+    yum-config-manager --disable <reponame>
+    yum-config-manager --disable updates
+    yum-config-manager --enable <reponame>
+    yum-config-manager --enable updates
+    ----
+
+    === Cache leeren
+
+    ----
+    # yum clean packages
+    # yum clean metadata
+    ----
+
+    == Paketmanagement bei OpenSUSE
+
+    - OpenSUSE verwednet `zypper` als Paketmanagement Tool
+    - ähnlich wie `apt` und `yum`
+
+    === Paketindex aktualisieren
+
+    ----
+    zypper refresh      # Paketindex aktualisieren
+    ----
+
+    - pro Repo kann eingestellt werden, ob der Index automatisch aktualiert werden soll
+
+    === nach Paketen suchen
+
+    ----
+    zypper search <paketname>      # nach Paketen suche
+    zypper se <paketname>
+    zypper se -i              # Liste der installierten Pakete
+    zypper se -i <string>     # prüfen, ob Pakete installiert mit <string> im Namen installiert sind
+    zypper se -u <string>     # Suche nach nicht-installierten Paketen
+    ----
+
+    === Installation von Paketen
+
+    ----
+    zypper install <paketname>
+    zypper in <paketname>
+    ----
+
+    - mit `zypper` können auch lokal vorhandene `.rpmr` Pakete installiert werden
+    - Abhängigkeiten werden dabei aufgelöst
+    - hier muss der absolute Pfad angegeben werden
+
+    === Upgrade von Paketen / des Systems
+
+    ----
+    zypper update        # alle installierten Pakete aktualisieren
+    zypper list-updates  # alle Aktualisierungen anzeigen
+    ----
+
+    === Löschen von Paketen
+
+    - beim Entfernen von Paketen werden automatisch alle Pakete mit entfernt, die von dem zu entfernenden Paket abhängen
+
+    ----
+    zypper remove <paket>
+    zypper re <paket>
+    ----
+
+    === Suche nach dem Paket, welches eine Datei enthält
+
+    - hierzu wird der Suchparameter `se` mit der Option `--provides` erweitert
+    - es folgt der absolute Pfad zur Datei
+
+    ----
+    # zypper se --provides /usr/lib64/libgimpmodule-2.0.so.0
+    ----
+
+    === Informationen über installierte Pakete
+
+    ----
+    # zypper info gimp
+    ----
+
+    === Software Repositories
+
+    - Anzeige aller auf dem System registrierten Repositories mit `zypper repos`
+    - mit der Option `modifyrepo` können Repos konfiguriert werden
+    - Repos aktivieren und deaktivieren mit `-e` und `-d`:
+
+    ----
+    # zypper modifyrepo -d repo-non-oss
+    Repository 'repo-non-oss' has been successfully disabled.
+
+    # zypper modifyrepo -e repo-non-oss
+    Repository 'repo-non-oss' has been successfully enabled.
+    ----
+
+    - _autorefresh_ für ein Repo ein- bzw. ausschalten mit `-f` und `-F`:
+
+    ----
+    # zypper modifyrepo -F repo-non-oss
+    Autorefresh has been disabled for repository 'repo-non-oss'.
+
+    # zypper modifyrepo -f repo-non-oss
+    Autorefresh has been enabled for repository 'repo-non-oss'.
+    ----
+
+    - Repos können mit `addrepo` hinzugefügt und mit `removerepo` wieder entfernt werden:
+
+    ----
+    # zypper addrepo http://packman.inode.at/suse/openSUSE_Leap_15.1/ packman
+    ----
+
+    - beim Hinzufügen können mit `-f` Autoupdates eingeschaltet werden
+    - wird beim Hinzufügen die Option `-d` mit angegeben, wird das Repo hinzugefügt aber nicht aktiviert
+
+    ----
+    # zypper removerepo packman
+    ----
